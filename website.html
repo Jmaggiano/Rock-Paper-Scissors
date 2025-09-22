@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rock, Paper, Scissors!</title>
+    <style>
+         :root {
+            --bg: #0b0f14;
+            --panel: #111826;
+            --ink: #e6edf3;
+            --muted: #9aa8b4;
+            --accent: #5eead4;
+            --lose: #f97373;
+            --win: #86efac;
+            --tie: #94a3b8;
+        }
+        
+        * {
+            box-sizing: border-box
+        }
+        
+        html,
+        body {
+            height: 100%
+        }
+        
+        body {
+            margin: 0;
+            font: 18px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial;
+            color: var(--ink);
+            background: radial-gradient(1200px 600px at 30% -10%, #132136, transparent), var(--bg);
+            display: grid;
+            place-items: center
+        }
+        
+        .wrap {
+            width: min(900px, 92vw);
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px
+        }
+        
+        h1 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: .2px;
+            color: var(--ink)
+        }
+        
+        .panel {
+            background: linear-gradient(180deg, #0f172a, #0b1322);
+            border: 1px solid #1f2b40;
+            border-radius: 16px;
+            padding: 14px;
+            position: relative
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center
+        }
+        
+        .vs {
+            font-weight: 700;
+            letter-spacing: .3px;
+            color: var(--muted)
+        }
+        
+        .cpu {
+            display: grid;
+            gap: 10px
+        }
+        
+        .chip {
+            width: 100%;
+            aspect-ratio: 5/3;
+            background: #0e1628;
+            border: 3px solid #21324f;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25) inset;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px
+        }
+        
+        .chip.pulseWin {
+            animation: chipPulseWin 2s ease
+        }
+        
+        .chip.pulseLose {
+            animation: chipPulseLose 1.5s ease
+        }
+        
+        .chip.pulseTie {
+            animation: chipPulseTie .8s ease
+        }
+        
+        @keyframes chipPulseWin {
+            0% {
+                border-color: var(--win);
+            }
+            100% {
+                border-color: #21324f;
+            }
+        }
+        
+        @keyframes chipPulseLose {
+            0% {
+                border-color: var(--lose);
+            }
+            100% {
+                border-color: #21324f;
+            }
+        }
+        
+        @keyframes chipPulseTie {
+            0% {
+                border-color: var(--tie);
+            }
+            100% {
+                border-color: #21324f;
+            }
+        }
+        
+        .pins {
+            display: none
+        }
+        
+        .name {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--muted)
+        }
+        
+        .hand {
+            font-size: 64px;
+            text-align: center;
+            height: 72px
+        }
+        
+        .pulse {
+            animation: pulse .28s ease
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(.7);
+                filter: brightness(1.3)
+            }
+            100% {
+                transform: scale(1)
+            }
+        }
+        
+        .score {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: var(--muted)
+        }
+        
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+        
+        .dot.win {
+            background: var(--win)
+        }
+        
+        .dot.lose {
+            background: var(--lose)
+        }
+        
+        .dot.tie {
+            background: var(--tie)
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+        
+        button {
+            background: #0f1a2b;
+            color: var(--ink);
+            border: 1px solid #1f2b40;
+            border-radius: 12px;
+            padding: 10px 12px;
+            cursor: pointer
+        }
+        
+        button:hover {
+            border-color: #2b3f61
+        }
+        
+        .accent {
+            border-color: #134e4a;
+            box-shadow: 0 0 0 1px #134e4a inset
+        }
+        
+        .result {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: 600
+        }
+        
+        .stats {
+            position: absolute;
+            top: 320px;
+            right: 12px;
+            font-size: 16px;
+            color: var(--muted)
+        }
+        
+        footer {
+            margin-top: 8px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Battle to the death!</h1>
+            <div class="controls">
+                <button id="toggle" class="accent" aria-pressed="false">▶ Start</button>
+                <button id="step">⏭️ Step</button>
+                <button id="reset">↺ Reset</button>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="stats">Round: <span id="round">0</span> | Ties: <span id="ties">0</span></div>
+            <div class="grid">
+                <div class="cpu" id="cpuA">
+                    <div class="name"><span>Jerry</span><span class="score" aria-live="polite"><span class="dot" id="ledA"></span> <span id="scoreA">0</span></span>
+                    </div>
+                    <div class="chip" id="chipA">
+                        <div class="hand" id="handA" aria-live="polite">–</div>
+                    </div>
+                </div>
+
+                <div class="vs">VS</div>
+
+                <div class="cpu" id="cpuB">
+                    <div class="name"><span>Eduardo</span><span class="score" aria-live="polite"><span class="dot" id="ledB"></span> <span id="scoreB">0</span></span>
+                    </div>
+                    <div class="chip" id="chipB">
+                        <div class="hand" id="handB" aria-live="polite">–</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result" id="result">Press “Start” to let them play.</div>
+        </section>
+
+        <footer>Emojis stand in for hands: ✊ = Rock. ✋ = Paper. ✌️ = Scissors.</footer>
+    </div>
+
+    <script>
+        (() => {
+            const MOVES = ['rock', 'paper', 'scissors'];
+            const ICON = {
+                rock: '✊',
+                paper: '✋',
+                scissors: '✌️'
+            };
+            const handA = document.getElementById('handA');
+            const handB = document.getElementById('handB');
+            const chipA = document.getElementById('chipA');
+            const chipB = document.getElementById('chipB');
+            const scoreAEl = document.getElementById('scoreA');
+            const scoreBEl = document.getElementById('scoreB');
+            const ledA = document.getElementById('ledA');
+            const ledB = document.getElementById('ledB');
+            const resultEl = document.getElementById('result');
+            const toggleBtn = document.getElementById('toggle');
+            const stepBtn = document.getElementById('step');
+            const resetBtn = document.getElementById('reset');
+            const roundEl = document.getElementById('round');
+            const tiesEl = document.getElementById('ties');
+
+            let scoreA = 0,
+                scoreB = 0,
+                round = 0,
+                ties = 0,
+                timer = null;
+
+            function randomMove() {
+                return MOVES[Math.floor(Math.random() * MOVES.length)];
+            }
+
+            function outcome(a, b) {
+                if (a === b) return 0;
+                if ((a === 'rock' && b === 'scissors') || (a === 'paper' && b === 'rock') || (a === 'scissors' && b === 'paper')) return 1;
+                return -1;
+            }
+
+            function light(el, kind) {
+                el.className = 'dot ' + kind;
+                setTimeout(() => el.className = 'dot', 260);
+            }
+
+            function pulseChip(chip, kind) {
+                chip.classList.remove('pulseWin', 'pulseLose', 'pulseTie');
+                void chip.offsetWidth;
+                if (kind === 'win') chip.classList.add('pulseWin');
+                if (kind === 'lose') chip.classList.add('pulseLose');
+                if (kind === 'tie') chip.classList.add('pulseTie');
+            }
+
+            function showHands(a, b) {
+                handA.textContent = ICON[a];
+                handB.textContent = ICON[b];
+                handA.classList.remove('pulse');
+                handB.classList.remove('pulse');
+                void handA.offsetWidth;
+                void handB.offsetWidth;
+                handA.classList.add('pulse');
+                handB.classList.add('pulse');
+            }
+
+            function randomWinText(cpu) {
+                return Math.random() < 0.5 ? `${cpu} won the round!` : `${cpu} emerges victorious!`;
+            }
+
+            function play() {
+                const a = randomMove();
+                const b = randomMove();
+                showHands(a, b);
+                const r = outcome(a, b);
+                round++;
+                roundEl.textContent = round;
+
+                if (r === 1) {
+                    scoreA++;
+                    scoreAEl.textContent = scoreA;
+                    resultEl.textContent = randomWinText('Jerry');
+                    light(ledA, 'win');
+                    light(ledB, 'lose');
+                    pulseChip(chipA, 'win');
+                    pulseChip(chipB, 'lose');
+                } else if (r === -1) {
+                    scoreB++;
+                    scoreBEl.textContent = scoreB;
+                    resultEl.textContent = randomWinText('Eduardo');
+                    light(ledA, 'lose');
+                    light(ledB, 'win');
+                    pulseChip(chipA, 'lose');
+                    pulseChip(chipB, 'win');
+                } else {
+                    ties++;
+                    tiesEl.textContent = ties;
+                    resultEl.textContent = 'It\'s a tie!';
+                    light(ledA, 'tie');
+                    light(ledB, 'tie');
+                    pulseChip(chipA, 'tie');
+                    pulseChip(chipB, 'tie');
+                }
+            }
+
+            function start() {
+                if (timer) return;
+                toggleBtn.textContent = '⏸ Pause';
+                toggleBtn.setAttribute('aria-pressed', 'true');
+                timer = setInterval(play, 1250);
+            }
+
+            function pause() {
+                if (!timer) return;
+                clearInterval(timer);
+                timer = null;
+                toggleBtn.textContent = '▶ Start';
+                toggleBtn.setAttribute('aria-pressed', 'false');
+            }
+
+            function toggle() {
+                timer ? pause() : start();
+            }
+
+            function step() {
+                pause();
+                play();
+            }
+
+            function reset() {
+                pause();
+                scoreA = scoreB = round = ties = 0;
+                scoreAEl.textContent = '0';
+                scoreBEl.textContent = '0';
+                roundEl.textContent = '0';
+                tiesEl.textContent = '0';
+                handA.textContent = '–';
+                handB.textContent = '–';
+                resultEl.textContent = 'Press “Start” to begin.';
+            }
+
+            toggleBtn.addEventListener('click', toggle);
+            stepBtn.addEventListener('click', step);
+            resetBtn.addEventListener('click', reset);
+        })();
+    </script>
+</body>
+
+</html>
